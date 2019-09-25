@@ -2,8 +2,8 @@ import struct
 
 #data = bytes.fromhex('7E5B01FF0A0231383D3400687D5D7E')
 #data = bytes.fromhex('7e5b01ff0a0f0a8b00ce00ce00ce00ce000000000125012501250125000000000000000000000000000000000000e0419a99b541000000000000ffdd00643a0000000000000000000000000000000000000000004500000000000000000000000000002aef7e')
-#data = bytes.fromhex('7e5b01ff0a0903001369ab8c05a5a77e') #time, date from GPS
-data = bytes.fromhex('7e5b01ff0a09001369ab9c0552fd3c424e36f5c2000dfa06055e00c4a37e') #GPRMC time, date, position, mag var
+data = bytes.fromhex('7e5b01ff0a0903001369ab8c05a5a77e') #time, date from GPS
+#data = bytes.fromhex('7e5b01ff0a09001369ab9c0552fd3c424e36f5c2000dfa06055e00c4a37e') #GPRMC time, date, position, mag var
 
 protocol = data[1]
 source = data[2]
@@ -56,4 +56,25 @@ if packet_type == 9:
         print(track)
         print(magvar)   
         print(gndspeed)
+
+      if subpacket_type == 3:
+        time = int.from_bytes(payload[3:7], byteorder='little')
+        
+        year = payload[2]   
+        month = time & 15
+        day = (time >> 4) & 31
+        hour = (time >> 9) & 31
+        min = (time >> 14) & 63
+        sec = (time >> 20) & 63
+        status = (time >> 26) & 1
+       
+        print(subpacket_type)
+        print(year)
+        print(month)
+        print(day)
+        print(hour)
+        print(min)
+        print(sec)
+        print(status)
+        
         
