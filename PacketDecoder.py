@@ -29,6 +29,7 @@ if packet_type == 9:
         longitude = struct.unpack("f", payload[10:14])[0]
         track = struct.unpack("h", payload[14:16])[0]
         magvar = struct.unpack("h", payload[16:18])[0]
+        gndspeed = struct.unpack("h", payload[18:20])[0]
      
         year = payload[1]   
         month = time & 15
@@ -40,6 +41,7 @@ if packet_type == 9:
         
         track = track/10
         magvar = magvar/100
+        gndspeed = gndspeed/10
 
         print(subpacket_type)
         print(year)
@@ -52,5 +54,6 @@ if packet_type == 9:
         print(latitude)
         print(longitude)
         print(track)
-        print(magvar)    
+        print(magvar)   
+        print(gndspeed)
         
