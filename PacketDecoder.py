@@ -1,11 +1,13 @@
 import struct
 
-#data = bytes.fromhex('7E5B01FF0A0231383D3400687D5D7E')
-#data = bytes.fromhex('7e5b01ff0a0f0a8b00ce00ce00ce00ce000000000125012501250125000000000000000000000000000000000000e0419a99b541000000000000ffdd00643a0000000000000000000000000000000000000000004500000000000000000000000000002aef7e')
-data = bytes.fromhex('7e5b01ff0a0903001369ab8c05a5a77e') #time, date from GPS
+#data = 
+#data = bytes.fromhex('7E5B01FF0A0231383D3400687D5D7E') dimmer
+data = bytes.fromhex('7e5b01ff0a0f0a8b00ce00ce00ce00ce000000000125012501250125000000000000000000000000000000000000e0419a99b541000000000000ffdd00643a0000000000000000000000000000000000000000004500000000000000000000000000002aef7e')  #engine data
+#data = bytes.fromhex('7e5b01ff0a0903001369ab8c05a5a77e') #time, date from GPS
 #data = bytes.fromhex('7e5b01ff0a09001369ab9c0552fd3c424e36f5c2000dfa06055e00c4a37e') #GPRMC time, date, position, mag var
+#data = bytes.fromhex('7e5b01ff0a09040301059d46894481daa4c112037e')
 
-#unstuff bytes here.  7d5d = 7d, 7d5e = 7e
+#unstuff bytes here.  7d5d = 7d, 7d5e = 7e.  Unstuff checksum to check (CRC16.X25).  Then unstuff remaining message.
 
 protocol = data[1]
 source = data[2]
@@ -14,6 +16,7 @@ ttl = data[4]
 packet_type = data[5]
 payload = data[6:-3]
 checksum = data[-3:-1].hex()
+print(data)
 
 #print(protocol)
 #print(source)
@@ -21,6 +24,28 @@ checksum = data[-3:-1].hex()
 #print(packet_type)
 #print(payload.hex())
 #print(checksum)
+
+if packet_type == 0:
+    print('Hello')
+
+#if packet_type == 1a: nav/com, transponder state
+if packet_type == 0x0f: #engine data.  fuel flow, fuel quantity, hourmeter as 32 bit floats. EGT 1-6, airspeed (2 byte int), altimeter (4 byte int). volts, VS, baroset as 32b floats.  Byte before tach2 is bitfield 0 tachstop 1 fuelflowstop 2 canbus data.
+#TACH,CHT1CHT2CHT3CHT4CHT5CHT6,EGT1EGT2EGT3EGT4EGT5EGT6,EGT7EGT8EGT9,
+    tach = struct.unpack(">h", payload[0:2])[0]
+    cht1 = struct.unpack(">h", payload[2:4])[0]
+    cht2 = struct.unpack(">h", payload[4:6])[0]
+    cht3 = struct.unpack(">h", payload[6:8])[0]
+    cht4 = struct.unpack(">h", payload[8:10])[0]
+    egt1 = struct.unpack(">h", payload[14:16])[0]
+    egt2 = struct.unpack(">h", payload[16:18])[0]
+    egt3 = struct.unpack(">h", payload[18:20])[0]
+    egt4 = struct.unpack(">h", payload[20:22])[0]
+    
+    print('Tach: {} RPM'.format(tach))
+    print('CHT1: {}\N{DEGREE SIGN}'.format(cht1))
+    print('EGT1: {}\N{DEGREE SIGN}'.format(egt1))
+#if packet_type == 0b: limit settings
+#if packet_type == 4: analog inputs
 
 if packet_type == 9:
       subpacket_type = payload[0]
