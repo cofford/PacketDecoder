@@ -23,15 +23,15 @@ class DataCollector:
         --> 7f (MSB of checksum)
         --> 7e frame flag
     '''
-    def __init__(self):
+    def __init__(self, hxr_host):
         self.isRunning = True
         
         # UDP socket
         self.sock_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.address_local = (('', 10001))
-        self.addresses_remote = ['192.168.0.1', '192.168.0.2']
+        self.addresses_remote = hxr_host
         self.udphello = bytes.fromhex('5B01FF0A00010001947F')
-        print('Starting UDP server on {} port {}...'.format(*self.address_local))
+        print('Starting UDP server on port {}...'.format(self.address_local[1]))
         self.sock_udp.bind(self.address_local)
         self.hello = False
         self.data = ''
@@ -52,7 +52,6 @@ class DataCollector:
     
     def handler(self, signal_received, frame):
         # Handle any cleanup here
-        # self.connection.shutdown(0)
         self.connection.close()
         self.connection = None
         self.sock_tcp.shutdown(0)
@@ -70,7 +69,6 @@ class DataCollector:
         if data:
             print('received {!r}'.format(data.hex()))
             Decode(data)
-            # print(bytes.fromhex(data))
 
     def stop(self):
         self.isRunning = False
@@ -80,14 +78,13 @@ class DataCollector:
             while not self.hello:
                 print('Waiting to receive UDP message...')
                 self.data, self.address = self.sock_udp.recvfrom(10)
-                for i in self.addresses_remote:
-                    if i in self.address:
-                        self.hello = True
-                        print('Received message from {}'.format(i))
-                        if self.data:
-                            self.tcphello = self.send_hello()
-                            print('waiting for a TCP connection')
-                            self.connection, self.client_address = self.sock_tcp.accept()
+                if self.addresses_remote in self.address:
+                    self.hello = True
+                    print('Received message from {}'.format(self.address))
+                    if self.data:
+                        self.tcphello = self.send_hello()
+                        print('waiting for a TCP connection')
+                        self.connection, self.client_address = self.sock_tcp.accept()
                 else:
                     time.sleep(1)
                     self.count +=1
@@ -101,8 +98,8 @@ class DataCollector:
             time.sleep(0.01)
             
 if __name__ == "__main__":
-    
-    uc = DataCollector()
+    # Create and instance of the class using the HXr hostname.
+    uc = DataCollector(hxr_host='192.168.0.1')
     signal(SIGINT, uc.handler)
     print('Running. Press CTRL-C to exit.')
     uc.run()
