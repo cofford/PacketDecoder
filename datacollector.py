@@ -5,7 +5,24 @@ import sys
 from decode import Decode
 from signal import signal, SIGINT
 
-class UdpCollector:
+class DataCollector:
+    '''
+    UDP listens for a HELLO packet from HXr
+    Format:
+        HELLO
+        --> 7e frame flag
+        --> 5b vendor protocol code
+        --> 01 source=1 (Primary ID)
+        --> ff destination=255 (broadcast)
+        --> 0a TTL=10
+        --> 00 packet type=0 (hello)
+        --> 01 link version=1
+        --> 00 serial number=1
+        --> 01 (LSB of serial number)
+        --> 94 checksum=0x7f94
+        --> 7f (MSB of checksum)
+        --> 7e frame flag
+    '''
     def __init__(self):
         self.isRunning = True
         
