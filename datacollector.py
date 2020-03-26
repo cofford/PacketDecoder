@@ -39,6 +39,11 @@ class DataCollector:
 
         # TCP socket
         print('Starting TCP server')
+        self.tcp_hello = bytes.fromhex('7E5B01FF0A00010001947F7E')
+        self.tcp_hxr_hello = '7e5b01ff0a000100001d6e7e'
+        self.keepalive_last_time = time.strftime('%s')
+        self.keepalive_trigger = False
+        self.keepalive_diff = '9'
         self.sock_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock_tcp.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
         self.sock_tcp.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 3)
@@ -67,9 +72,14 @@ class DataCollector:
     def tcp_data(self):
         data = self.connection.recv(1024)
         if data:
-            print('received {!r}'.format(data.hex()))
             Decode(data)
+            if self.tcp_hxr_hello in data.hex():
+                print('\n\tHeartbeat response!\n')
+                self.connection.sendall(self.tcp_hello)
+            else:
+                print('received {}:\n\t{!r}'.format(time.asctime(), data.hex()))
 
+    
     def stop(self):
         self.isRunning = False
     
@@ -82,7 +92,7 @@ class DataCollector:
                     self.hello = True
                     print('Received message from {}'.format(self.address))
                     if self.data:
-                        self.tcphello = self.send_hello()
+                        self.tcp_hello = self.send_hello()
                         print('waiting for a TCP connection')
                         self.connection, self.client_address = self.sock_tcp.accept()
                 else:

@@ -21,7 +21,7 @@ def Decode(data):
     #print(checksum)
 
     if packet_type == 0:
-        print('Hello')
+        print('\n\tHeartbeat request!')
 
     #if packet_type == 1a: nav/com, transponder state
     if packet_type == 0x0f: #engine data.  fuel flow, fuel quantity, hourmeter as 32 bit floats. EGT 1-6, airspeed (2 byte int), altimeter (4 byte int). volts, VS, baroset as 32b floats.  Byte before tach2 is bitfield 0 tachstop 1 fuelflowstop 2 canbus data.
