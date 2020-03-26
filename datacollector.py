@@ -102,7 +102,7 @@ class DataCollector:
             
 if __name__ == "__main__":
     
-    uc = UdpCollector()
+    uc = DataCollector()
     signal(SIGINT, uc.handler)
     print('Running. Press CTRL-C to exit.')
     uc.run()
