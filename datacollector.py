@@ -64,7 +64,7 @@ class DataCollector:
     def send_hello(self):
         self.sock_udp.sendto(self.udphello, self.address)
         return bytes.fromhex('7E5B01FF0A00010001947F7E')
-
+     
     def tcp_data(self):
         data = self.connection.recv(1024)
         if data:
