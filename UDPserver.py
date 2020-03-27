@@ -12,6 +12,7 @@ IP = ""
 PORT = 10001
 
 udphello = bytes.fromhex('5B01FF0A00010001947F')
+gpsmessage = bytes.fromhex('7e5b01ff0a09001369ab8c05dafc3c424f36f5c2000afa06056100e2c77e')
 # Bind the socket to the port
 server_address = (IP, PORT)
 print('starting up UDP on {} port {}'.format(*server_address))
@@ -56,6 +57,7 @@ while True:
         while True:
             data = connection.recv(1024)
             print('received {!r}'.format(data.hex()))
+            connection.sendall(gpsmessage)
             Decode(data)
             if data:
                 if i == 20:
