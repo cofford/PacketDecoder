@@ -8,7 +8,7 @@ from decode import Decode
 # Create a UDP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-IP = ""
+IP = "0.0.0.0"
 PORT = 10001
 
 udphello = bytes.fromhex('5B01FF0A00010001947F')

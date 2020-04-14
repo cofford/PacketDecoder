@@ -1,5 +1,7 @@
 import struct
 
+data = '7e5b01ff0a09001369ab9c0552fd3c424e36f5c2000dfa06055e00c4a37e'
+
 def Decode(data):
 
     #unstuff bytes here.  7d5d = 7d, 7d5e = 7e.  Unstuff checksum to check (CRC16.X25).  Then unstuff remaining message.
@@ -10,7 +12,7 @@ def Decode(data):
     ttl = data[4]
     packet_type = data[5]
     payload = data[6:-3]
-    checksum = data[-3:-1].hex()
+    #checksum = data[-3:-1].hex()
     #print(data)
 
     #print(protocol)
@@ -93,3 +95,4 @@ def Decode(data):
 
             #if subpacket_type == 4: GPS altitide and geoidal difference, fix quality, number of satellites in fix, from current GPS source like GPGGA
             
+Decode(data)            

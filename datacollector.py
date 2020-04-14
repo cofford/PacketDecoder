@@ -4,6 +4,8 @@ import time
 import sys
 from decode import Decode
 from signal import signal, SIGINT
+from xplane import xplane
+from gps import gps
 
 class DataCollector:
     '''
@@ -15,7 +17,7 @@ class DataCollector:
         --> 01 source=1 (Primary ID)
         --> ff destination=255 (broadcast)
         --> 0a TTL=10
-        --> 00 packet type=0 (hello)
+        --> 00 packet type=0 (hello)self.connection.sendall(self.tcp_hello)
         --> 01 link version=1
         --> 00 serial number=1
         --> 01 (LSB of serial number)
@@ -50,6 +52,11 @@ class DataCollector:
         self.sock_tcp.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 5)
         self.sock_tcp.bind(self.address_local)
         self.sock_tcp.listen(1)
+        
+
+        #temp
+        #self.gps_message = bytes.fromhex('7e5b01ff0a09001369ab9c0552fd3c424e36f5c2000dfa06055e00c4a37e')
+        
 
         # Watchdog timer functionality
         self.count = 0
@@ -59,8 +66,6 @@ class DataCollector:
         # Handle any cleanup here
         self.connection.close()
         self.connection = None
-        self.sock_tcp.shutdown(0)
-        self.sock_tcp.close()
         self.sock_tcp = None
         print('SIGINT or CTRL-C detected. Exiting gracefully')
         sys.exit(0)
@@ -70,6 +75,7 @@ class DataCollector:
         return bytes.fromhex('7E5B01FF0A00010001947F7E')
      
     def tcp_data(self):
+        
         data = self.connection.recv(1024)
         if data:
             Decode(data)
@@ -78,8 +84,32 @@ class DataCollector:
                 self.connection.sendall(self.tcp_hello)
             else:
                 print('received {}:\n\t{!r}'.format(time.asctime(), data.hex()))
+                
+            
 
-    
+    def send_gps(self):
+        #get xplane data
+        xplanedata = xplane()
+        #return [longitude, latitude, altitude, pitch, roll, headingt, headingm, airspeed, gndspeed]
+        #print(xplanedata)
+        longitude = xplanedata[0]
+        latitude = xplanedata[1]
+        altitide = xplanedata[2]
+        pitch = xplanedata[3]
+        roll = xplanedata[4]
+        headingt = xplanedata[5]
+        headingm = xplanedata[6]
+        airspeed = xplanedata[7]
+        gndspeed = xplanedata[8]
+
+        #construct gps message
+
+        magvar = -15.9
+        gps_message = bytes.fromhex(gps(latitude, longitude, headingt, magvar, gndspeed))
+        print(gps_message.hex())
+        self.connection.send(gps_message)
+        time.sleep(0.01)
+
     def stop(self):
         self.isRunning = False
     
@@ -103,6 +133,14 @@ class DataCollector:
                         sys.exit(254)
             try:
                 self.tcp_data()
+                #time.sleep(0.1)
+            #try:
+                self.send_gps()
+                #time.sleep(0.1)
+                
+                
+                
+
             except ValueError:
                 self.connection.close()
             time.sleep(0.01)
