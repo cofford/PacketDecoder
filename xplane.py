@@ -3,6 +3,7 @@ UDP_PORT = 49000
 
 import socket
 import struct 
+import xdata
 
 datarefs = [
   
@@ -11,10 +12,28 @@ datarefs = [
     #("sim/flightmodel/position/longitude","°E","The longitude of the aircraft",6),
     #("sim/flightmodel/misc/h_ind", "ft", "",0),
     #("sim/flightmodel/position/y_agl","m", "AGL", 0), 
-    ("sim/flightmodel/position/mag_psi", "°", "The real magnetic heading of the aircraft",0),
-    ("sim/flightmodel/position/indicated_airspeed", "kt", "Air speed indicated - this takes into account air density and wind direction",0), 
-    ("sim/flightmodel/position/groundspeed","m/s", "The ground speed of the aircraft",0),
+    ("sim/flightmodel/position/mag_psi"),#, "°", "The real magnetic heading of the aircraft",0),
+    ("sim/flightmodel/position/indicated_airspeed"),# "kt", "Air speed indicated - this takes into account air density and wind direction",0), 
+    ("sim/flightmodel/position/groundspeed"),#"m/s", "The ground speed of the aircraft",0),
     #("sim/flightmodel/position/vh_ind", "m/s", "vertical velocity",1)
+    ("sim/cockpit2/engine/indicators/engine_speed_rpm[0]"),
+    ("sim/cockpit2/engine/indicators/CHT_deg_C[0]"),
+    ("sim/cockpit2/engine/indicators/EGT_deg_C[0]"),
+    ("sim/cockpit2/engine/indicators/fuel_flow_kg_sec[0]"),
+    ("sim/cockpit2/engine/indicators/fuel_pressure_psi[0]"),
+    ("sim/cockpit2/engine/indicators/oil_pressure_psi[0]"),
+    ("sim/cockpit2/engine/indicators/oil_temperature_deg_C[0]"),
+    ("sim/cockpit2/engine/indicators/MPR_in_hg[0]"),
+    ("sim/cockpit2/engine/indicators/carburetor_temperature_C[0]"),
+    ("sim/cockpit2/temperature/outside_air_temp_degf[0]"),
+    ("sim/time/hobbs_time"), #seconds
+    ("sim/time/total_flight_time_sec"),
+    ("sim/flightmodel/engine/ENGN_bat_volt[0]"),
+    ("sim/cockpit2/fuel/fuel_quantity[0]"), #kgs
+    ("sim/flightmodel/position/magnetic_variation")
+   
+
+
     
 
   ]
@@ -29,21 +48,26 @@ sock = socket.socket(socket.AF_INET, # Internet
  # Give them an index number and a frequency in Hz.
  # To disable sending you send frequency 0. 
 cmd = b"RPOS\x00"
-freq=b"1\x00"
+freq=b"20\x00"
 message = struct.pack("<5s2s", cmd, freq)
 sock.sendto(message, (UDP_IP, UDP_PORT))
 print('Requesting Xplane Dataref data...')
+
 
 for index,dataref in enumerate(datarefs):
     # Send one RREF Command for every dataref in the list.
     # Give them an index number and a frequency in Hz.
     # To disable sending you send frequency 0. 
     cmd = b"RREF\x00"
-    freq=1
-    string = datarefs[index][0].encode()
+    freq = 20
+    #string = datarefs[index][0].encode()
+    string = datarefs[index].encode()
+    #print(string)
     message = struct.pack("<5sii400s", cmd, freq, index, string)
     assert(len(message)==413)
     sock.sendto(message, (UDP_IP, UDP_PORT))
+    #print(message)
+
 
 def DecodePacket(data):
   retvalues = {}
@@ -75,6 +99,8 @@ def DecodePacket(data):
 def xplane():
   rposdata = 0
   rrefdata = 0
+ 
+  
 
   while (rposdata == 0 or rrefdata == 0):
     # Receive packet
@@ -85,21 +111,21 @@ def xplane():
     header=data[0:4]
     if(header==b"RPOS"):
    
-        print("Longitude: ", values[1])
-        longitude = values[1]
-        print(" Latitude: ", values[2])
-        latitude = values[2]
-        print(" Altitude: ", values[3])
-        altitude = values[3] 
-        print("      AGL: ", values[4])
-        print("    Pitch: ", values[5])
-        pitch = values[5] 
-        print(" HeadingT: ", values[6])
-        headingt = values[6]
-        print("     Roll: ", values[7])
-        roll = values[7]
-        print("   VSpeed: ", values[9])
-        vspeed = values[9]
+        #print("Longitude: ", values[1])
+        xdata.longitude = values[1]
+        #print(" Latitude: ", values[2])
+        xdata.latitude = values[2]
+        #print(" Altitude: ", values[3])
+        xdata.altitude = values[3] 
+        #print("      AGL: ", values[4])
+        #print("    Pitch: ", values[5])
+        xdata.pitch = values[5] 
+        #print(" HeadingT: ", values[6])
+        xdata.headingt = values[6]
+        #print("     Roll: ", values[7])
+        xdata.roll = values[7]
+        #print("   VSpeed: ", values[9])
+        xdata.vspeed = values[9]
 
         rposdata = 1
 
@@ -107,28 +133,61 @@ def xplane():
      for key,val in values.items():
       #print(("{0:10."+str(datarefs[key][3])+"f} {1:<5} {2}").format(val[0],val[1],val[2]))
         if (key==0):
-            headingm=val
-            print(" Headingm: ", headingm)
+            xdata.headingm=val
+            #print('mag track: ', val)
         if (key==1):
-            airspeed=val
-            print (" Airspeed: ", airspeed)
+            xdata.airspeed=val
         if (key==2):
-            gndspeed=val
+            xdata.gndspeed=val
+        if (key==3):
+            xdata.rpm=val
+        if (key==4):
+            xdata.cht=val
+        if (key==5):
+            xdata.egt=val
+        if (key==6):
+            xdata.fuelflow=val
+        if (key==7):
+            xdata.fuelpressure=val
+        if (key==8):
+            xdata.oilpressure=val
+        if (key==9):
+            xdata.oiltemp=val
+        if (key==10):
+            xdata.manifoldpressure=val
+        if (key==11):
+            xdata.manifoldtemp=val
+        if (key==12):
+            xdata.oat=val
+        if (key==13):
+            xdata.hobbs=val
+        if (key==14):
+            xdata.flighttime=val
+        if (key==15):
+            xdata.volts=val   
+        if (key==16):
+            xdata.fuelqty=val
+        if (key==17):
+            xdata.magvar=val
+            
+        
+        
         
         rrefdata = 1
     
-    #return (longitude, latitude, altitude, pitch, roll, headingt, headingm, airspeed, gndspeed))
+    
 
-    while (rposdata == 1 and rrefdata ==1):
+    if (rposdata == 1 and rrefdata == 1):
         #print(longitude, latitude, altitude, pitch, roll, headingt, headingm, airspeed, gndspeed)
         rposdata = 0
         rposdata = 0
 
-        return [longitude, latitude, altitude, pitch, roll, headingt, headingm, airspeed, gndspeed]
+        
+        
 
     
 
-    #print(values)
+    
 
 if __name__ == '__main__':
   xplane()

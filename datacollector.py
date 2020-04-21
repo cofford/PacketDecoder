@@ -4,14 +4,13 @@ import time
 import sys
 from decode import Decode
 from signal import signal, SIGINT
-from xplane import xplane
-from gps import gps
+#from xplane import xplane
+from message import gps, eis
+import xdata
 
 class DataCollector:
     '''
-    UDP listens for a HELLO packet from HXr
-    Format:
-        HELLO
+    UDP listens for a HELLO packet from HXrfrom datacollector import DataCollector
         --> 7e frame flag
         --> 5b vendor protocol code
         --> 01 source=1 (Primary ID)
@@ -87,28 +86,18 @@ class DataCollector:
                 
             
 
-    def send_gps(self):
-        #get xplane data
-        xplanedata = xplane()
-        #return [longitude, latitude, altitude, pitch, roll, headingt, headingm, airspeed, gndspeed]
-        #print(xplanedata)
-        longitude = xplanedata[0]
-        latitude = xplanedata[1]
-        altitide = xplanedata[2]
-        pitch = xplanedata[3]
-        roll = xplanedata[4]
-        headingt = xplanedata[5]
-        headingm = xplanedata[6]
-        airspeed = xplanedata[7]
-        gndspeed = xplanedata[8]
-
-        #construct gps message
-
-        magvar = -15.9
-        gps_message = bytes.fromhex(gps(latitude, longitude, headingt, magvar, gndspeed))
-        print(gps_message.hex())
+    def send_data(self):
+        
+        gps_message = bytes.fromhex(gps())
+        #print(gps_message.hex())
         self.connection.send(gps_message)
         time.sleep(0.01)
+        
+        eis_message = bytes.fromhex(eis())
+        #print(eis_message.hex())
+        self.connection.send(eis_message)
+        time.sleep(0.01)
+        
 
     def stop(self):
         self.isRunning = False
@@ -135,7 +124,7 @@ class DataCollector:
                 self.tcp_data()
                 #time.sleep(0.1)
             #try:
-                self.send_gps()
+                self.send_data()
                 #time.sleep(0.1)
                 
                 
@@ -147,7 +136,7 @@ class DataCollector:
             
 if __name__ == "__main__":
     # Create and instance of the class using the HXr hostname.
-    uc = DataCollector(hxr_host='192.168.0.1')
+    uc = DataCollector(hxr_host='192.168.0.2')
     signal(SIGINT, uc.handler)
     print('Running. Press CTRL-C to exit.')
     uc.run()

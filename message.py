@@ -76,11 +76,7 @@ def gps(): #latlong are floats.  track/magvar/gndspeed are short
     status = (time >> 26) & 1
     '''
     time = 94153577
-    #'7e5b01ff0a09001369ab9c0552fd3c424e36f5c2000dfa06055e00c4a37e'
-    #payload = data[6:-3]
-    #checksum = data[-3:-1].hex()
-    #print(data)
-    #payload = struct.pack("7BIff", protocol, source, destination, ttl, packet_type, subpacket_type, year, time, latitude, longitude)
+    
     
     payload = struct.pack("7B", protocol, source, destination, ttl, packet_type, subpacket_type, year)
     payload2 = struct.pack("Iff", time, xdata.latitude, xdata.longitude)
@@ -97,26 +93,45 @@ def eis():
     source = 1
     destination = 255
     ttl = 10
-    packet_type = 16
+    packet_type = 0x0f
     
     #convert and scale variables
-    volts = xdata.volts * 10
-    hobbs = xdata.hobbs / 360
-    fuelqty = xdata.fuelqty * 22 / 6
-    flight_hrs = xdata.flighttime / 3600
-    flight_min = (xdata.flighttime % 3600) / 60
-    flight_sec = (xdata.flighttime % 3600) % 60
+    rpm = int(xdata.rpm)
+    cht = int(xdata.cht)
+    egt = int(xdata.egt)
+    airspeed = int(xdata.airspeed)
+    oat = int(xdata.oat)
+    oiltemp = int(xdata.oiltemp)
+    oilpressure = int(xdata.oilpressure)
+    manifoldpressure = int(xdata.manifoldpressure * 10)
+    fuelpressure = int(xdata.fuelpressure)
+    volts = float(xdata.volts)
+    fuelflow = float(xdata.fuelflow * 1320)
+    #print("fuel flow: ", fuelflow)
+    hobbs = float(xdata.hobbs / 3600)
+    fuelqty = float(xdata.fuelqty * 22 / 6)
+    flight_hrs = (int(xdata.flighttime / 3600))
+    flight_min = (int((xdata.flighttime % 3600) / 60))
+    flight_sec = (int((xdata.flighttime % 3600) % 60))
 
 
     #construct payload
-    preamble = struct.pack("5B", protocol, source, destination, ttl, packet_type)
-    part1 = struct.pack(">H6H9Hhf", xdata.rpm, xdata.cht, xdata.cht, xdata.cht, xdata.cht, 0,0, xdata.egt, xdata.egt, xdata.egt, xdata.egt, 0,0,0,0,0, xdata.airspeed, xdata.altitude)
-    part2 = struct.pack(">ffhfhhbHhhHhh", volts, fuelflow, 0, xdata.vspeed, xdata.oat, xdata.oiltemp, xdata.oilpressure, xdata.manifoldpressure, 0, 0, xdata.fuelpressure, 0, 0)
-    part3 = struct.pack(">bffcccbbfbhbb", 0, hobbs, fuelqty, flight_hrs, flight_min, flight_sec, 0x2c, 0x2c, xdata.baropressure, 0, 0, 0, 0x3b)
+    preamble = struct.pack("5B", protocol, source, destination, ttl, packet_type) 
+    part1 = struct.pack(">h6h9hhf", rpm, cht, cht, cht, cht, 0,0, egt, egt, egt, egt, 0,0,0,0,0, airspeed, 0.0) #
+    part2 = struct.pack("<ff", volts, fuelflow)
+    part3 = struct.pack(">hfhhbhhhhhhb", 25, 0.0, oat, oiltemp, oilpressure, manifoldpressure, 0, 0, fuelpressure, 0, 0, 0) #
+    part4 = struct.pack("<ff", hobbs, fuelqty)
+    part5 = struct.pack(">bbbbbfbhbb", flight_hrs, flight_min, flight_sec, 0x2c, 0x2c, xdata.baropressure, 0, 0, 0, 0x3b) #23
     
-    message = stuff((preamble + part1 + part2 + part3).hex())
+    message = stuff((preamble + part1 + part2 + part3 + part4 + part5).hex())
     
+    
+
     return message
+
+if __name__ == "__main__":
+   
+    eis()
 
 
 

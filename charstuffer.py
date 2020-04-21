@@ -31,5 +31,13 @@ def stuff(payload):
     x = payload.replace (escbyte, stuffedbytes)
     y = x.replace (flagbyte, stuffedflag)
     
+    length = len(y)%2
+
+    if length != 0:
+        y='00'
+
+    
+    
     return (flagbyte + y + flagbyte)
 
+#bytedata=bytedata.replace(b'\x00', b'\x00\x00')
